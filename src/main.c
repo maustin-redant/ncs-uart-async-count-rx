@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
-#include <device.h>
-#include <devicetree.h>
-#include <sys/ring_buffer.h>
-#include <drivers/gpio.h>
-#include <drivers/uart.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/ring_buffer.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/uart.h>
 #include <string.h>
 
 #define UART_BUF_SIZE		16
@@ -96,7 +96,7 @@ void app_uart_async_callback(const struct device *uart_dev,
 
 static void app_uart_init(void)
 {
-	dev_uart = device_get_binding("UART_0");
+	dev_uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 	if (dev_uart == NULL) {
 		printk("Failed to get UART binding\n");
 		return;
