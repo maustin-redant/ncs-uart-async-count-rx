@@ -12,7 +12,7 @@
 #include <zephyr/drivers/uart.h>
 #include <string.h>
 
-#define UART_BUF_SIZE		32
+#define UART_BUF_SIZE		64
 #define UART_TX_TIMEOUT_MS	100
 #define UART_RX_TIMEOUT_MS	100
 #define UART0_INTERPRETER_STACKSIZE 512 
@@ -40,7 +40,7 @@ uint8_t *uart_buf_next = uart_double_buffer[1];
 // UART RX message queue
 K_MSGQ_DEFINE(uart_rx_msgq, sizeof(struct uart_msg_queue_item), UART_RX_MSG_QUEUE_SIZE, 4);
 
-//static uint8_t string_buffer[UART_BUF_SIZE + 1];
+static uint8_t string_buffer[UART_BUF_SIZE + 1];
 
 static const struct device *dev_uart;
 
@@ -184,18 +184,19 @@ void main(void)
 	const uint8_t test_string[] = "Hello world through the UART async driver\r\n";
 	app_uart_send(test_string, strlen(test_string));
 
-	//struct uart_msg_queue_item incoming_message;
+	struct uart_msg_queue_item incoming_message;
 
-	// while (1) {
-	// 	// This function will not return until a new message is ready
-	// 	k_msgq_get(&uart_rx_msgq, &incoming_message, K_FOREVER);
+	while (1) {
+		// This function will not return until a new message is ready
+		k_msgq_get(&uart_rx_msgq, &incoming_message, K_FOREVER);
 
-	// 	// Process the message here.
-	// 	//static uint8_t string_buffer[UART_BUF_SIZE + 1];
-	// 	memcpy(string_buffer, incoming_message.bytes, incoming_message.length);
-	// 	string_buffer[incoming_message.length] = 0;
-	// 	printk("RX %i: %s\n", incoming_message.length, string_buffer);
-	// }
+		// Process the message here.
+		//static uint8_t string_buffer[UART_BUF_SIZE + 1];
+		memcpy(string_buffer, incoming_message.bytes, incoming_message.length);
+		string_buffer[incoming_message.length] = 0;
+		//app_uart_send(string_buffer, incoming_message.length);
+		printk("RX %i: %s\n", incoming_message.length, string_buffer);
+	}
 }
 
 K_THREAD_DEFINE(t_uart0_interpreter_id, UART0_INTERPRETER_STACKSIZE, uart_printer, NULL, NULL, NULL, UART0_INTERPRETER_PRIORITY, 0, 0);
