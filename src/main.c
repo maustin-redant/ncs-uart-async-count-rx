@@ -137,8 +137,6 @@ static int app_uart_send(const uint8_t * data_ptr, uint32_t data_len)
 }
 
 void uart_printer() {
-	printk("STARTING UART GRABBER THREAD"); 
-	app_uart_send("START\r\n", strlen("START\r\n"));
 	int data_length;
 	struct uart_msg_queue_item incoming_message;
 
@@ -157,19 +155,22 @@ void uart_printer() {
 			// Read remaining bytes after initial read is started. append them to final string
 			while ((k_msgq_get(&uart_rx_msgq, &incoming_message, K_MSEC(50)) == 0) & (data_length < UART_BUF_SIZE)) { //K_MSEC(x) time value = uart timeout sort of
 				memcpy(new_buffer, incoming_message.bytes, incoming_message.length);
-				//memcpy(new_buffer, "x", 1);
-				data_length += incoming_message.length;
+				if ((data_length + incoming_message.length) < UART_BUF_SIZE)
+				{
+					data_length+= incoming_message.length;
+				} else {
+					data_length = UART_BUF_SIZE-1;
+				}
 				strcat(string_buffer, new_buffer);
 				string_buffer[data_length] = '\0';
 			}
-			printk("message grabbed\n");
 			if (data_length < UART_BUF_SIZE) {
 			strncpy(read_value, string_buffer, strlen(string_buffer));
 			} else {
 				strncpy(read_value, string_buffer, UART_BUF_SIZE);
 			}
 			printk("Message = %s\n", read_value);
-			printk("data_length = %d\n", data_length);
+			k_msgq_purge(&uart_rx_msgq);
 		}
 		k_yield();
 	}
